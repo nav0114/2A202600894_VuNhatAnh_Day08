@@ -498,10 +498,10 @@ run_dashboard()
 
 #### Deliverable Evaluation
 
-- [ ] File `group_project/evaluation/golden_dataset.json` — 15+ cặp Q&A
-- [ ] File `group_project/evaluation/eval_pipeline.py` — script chạy evaluation
-- [ ] File `group_project/evaluation/results.md` — bảng điểm + phân tích
-- [ ] So sánh A/B ít nhất 2 configs
+- [x] File `group_project/evaluation/golden_dataset.json` — 15+ cặp Q&A
+- [x] File `group_project/evaluation/eval_pipeline.py` — script chạy evaluation
+- [x] File `group_project/evaluation/results.md` — bảng điểm + phân tích
+- [x] So sánh A/B ít nhất 2 configs
 
 ---
 
@@ -517,8 +517,38 @@ run_dashboard()
 
 ### Kiến Trúc Hệ Thống
 
-```
-[Vẽ diagram kiến trúc ở đây]
+```mermaid
+graph TD
+    User([Người dùng]) -->|1. Nhập câu hỏi| UI[Streamlit UI Chat]
+    UI -->|2. Gửi câu hỏi + Lịch sử| Condenser[Query Condenser: Gemini 3.1 FL]
+    Condenser -->|3. Standalone Query| Router{Retrieval Manager}
+    
+    subgraph Parallel Retrieval
+        Router -->|A. Dense Query| Semantic[Semantic Search: Weaviate DB]
+        Router -->|B. Keyword Match| Lexical[Lexical Search: BM25]
+    end
+    
+    Semantic -->|Chunks + Scores| Merger[Merge & Rerank: RRF + Hybrid Reranker]
+    Lexical -->|Chunks + Scores| Merger
+    
+    Merger -->|Reranked Results| Threshold{Top Score >= 0.3?}
+    
+    Threshold -->|Yes| Reorder[Reorder Chunks: Avoid 'Lost in the middle']
+    Threshold -->|No: Fallback| PageIndex[Vectorless RAG: PageIndex API]
+    
+    PageIndex -->|Fallback Chunks| Reorder
+    
+    Reorder -->|Structured Context| Generator[LLM Generator: Gemini 3.1 FL]
+    Generator -->|4. Answer with Citations| UI
+    
+    subgraph Evaluation Pipeline
+        Golden[Golden Dataset: 16 Q&A] -->|Questions| UI
+        Golden -->|Expected Answers| Judge[Gemini LLM Judge]
+        Generator -->|Actual Answer| Judge
+        Reorder -->|Retrieved Context| Judge
+        Judge -->|Overall Scores & Analysis| Report[results.md / results.json]
+        Report -->|Render Report| UI
+    end
 ```
 
 ---
@@ -527,10 +557,11 @@ run_dashboard()
 
 | Thành viên | MSSV | Nhiệm vụ | Trạng thái |
 |-----------|------|----------|------------|
-| | | | |
-| | | | |
-| | | | |
-| | | | |
+| Cả nhóm | --- | Thu thập tài liệu (Task 1), Crawl bài báo (Task 2) & Convert sang Markdown (Task 3). | Hoàn thành |
+| Cả nhóm | --- | Chunking & Indexing vào Weaviate (Task 4), Xây dựng Semantic Search module (Task 5). | Hoàn thành |
+| Cả nhóm | --- | Xây dựng Lexical Search (Task 6), MMR/RRF & Hybrid Reranking module (Task 7). | Hoàn thành |
+| Cả nhóm | --- | Xây dựng PageIndex Fallback (Task 8), Ghép nối Retrieval Pipeline (Task 9) & LLM Generator (Task 10). | Hoàn thành |
+| Bùi Tuấn Minh | 2A202600728 | Thiết kế Streamlit UI Dashboard, Xây dựng Custom LLM-as-a-judge Evaluation Pipeline & So sánh A/B. | Hoàn thành |
 
 ---
 
@@ -541,9 +572,7 @@ run_dashboard()
 pip install -r requirements.txt
 
 # Chạy app
-streamlit run app.py
-# hoặc
-chainlit run app.py
+streamlit run src/app.py
 ```
 
 ---

@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EWS // Hệ thống Dự báo & Cảnh báo Sớm Sinh viên có Nguy cơ Bỏ học</title>
+  <style>
+    /* RESET & BASE */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* Palette */
+      --bg-page: #f9fafb;
+      --bg-surface: #ffffff;
+      --border-color: #121314;
+      --text-primary: #121314;
+      --text-secondary: #4a4d4f;
+      --text-muted: #84878a;
+      
+      /* Safety Status Colors (Solid, premium shades) */
+      --status-high-bg: #fdf2f2;
+      --status-high-border: #f05252;
+      --status-high-text: #c81e1e;
+      
+      --status-med-bg: #fffbeb;
+      --status-med-border: #f59e0b;
+      --status-med-text: #b45309;
+      
+      --status-low-bg: #f0fdf4;
+      --status-low-border: #10b981;
+      --status-low-text: #047857;
+
+      --accent-active: #f1f3f5;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* TELEMETRY / MONOSPACE TEXT CLASS */
+    .telemetry {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+
+    /* APP WRAPPER */
+    .app-container {
+      display: grid;
+      grid-template-rows: 64px 1fr;
+      height: 100vh;
+      width: 100%;
+    }
+
+    /* HEADER */
+    header {
+      background-color: var(--bg-surface);
+      border-bottom: 2px solid var(--border-color);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      padding: 0 24px;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .brand-divider {
+      height: 16px;
+      width: 1px;
+      background-color: var(--border-color);
+    }
+
+    .system-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--status-low-border);
+      display: inline-block;
+    }
+
+    .quick-stats {
+      display: flex;
+      gap: 32px;
+    }
+
+    .stat-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    /* MAIN VIEW GRID */
+    main {
+      display: grid;
+      grid-template-columns: 58% 42%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* PANEL DEFINITION */
+    .panel {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-surface);
+    }
+
+    /* LEFT DIRECTORY PANEL */
+    .directory-panel {
+      border-right: 1px solid var(--border-color);
+    }
+
+    /* FILTER BAR */
+    .toolbar {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background-color: var(--bg-surface);
+    }
+
+    .toolbar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .search-wrapper {
+      position: relative;
+      flex-grow: 1;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 38px;
+      padding: 0 12px 0 36px;
+      border: 1px solid var(--border-color);
+      font-size: 13px;
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .search-input:focus {
+      background-color: #fafbfc;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--text-secondary);
+    }
+
+    .filter-group {
+      display: flex;
+      gap: -1px; /* Overlap borders */
+    }
+
+    .btn-filter {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      height: 38px;
+      padding: 0 16px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-filter:hover {
+      background-color: var(--accent-active);
+    }
+
+    .btn-filter.active {
+      background-color: var(--text-primary);
+      color: var(--bg-surface);
+    }
+
+    .btn-filter .badge-count {
+      font-size: 10px;
+      background-color: #f1f3f5;
+      color: var(--text-primary);
+      padding: 2px 6px;
+      font-weight: 700;
+    }
+
+    .btn-filter.active .badge-count {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: var(--bg-surface);
+    }
+
+    /* DIRECTORY TABLE */
+    .table-container {
+      flex-grow: 1;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--bg-page);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 24px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    td {
+      padding: 16px 24px;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: middle;
+      cursor: pointer;
+    }
+
+    tr {
+      transition: background-color 0.1s ease;
+    }
+
+    tr:hover {
+      background-color: #fafbfc;
+    }
+
+    tr.selected {
+      background-color: var(--accent-active);
+    }
+
+    tr.selected td {
+      border-bottom-color: var(--border-color);
+    }
+
+    /* STUDENT GRID INFO */
+    .student-meta-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .student-avatar {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .student-name {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .student-id {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* RISK BADGES */
+    .risk-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      border: 1px solid;
+    }
+
+    .risk-badge.high {
+      background-color: var(--status-high-bg);
+      border-color: var(--status-high-border);
+      color: var(--status-high-text);
+    }
+
+    .risk-badge.medium {
+      background-color: var(--status-med-bg);
+      border-color: var(--status-med-border);
+      color: var(--status-med-text);
+    }
+
+    .risk-badge.low {
+      background-color: var(--status-low-bg);
+      border-color: var(--status-low-border);
+      color: var(--status-low-text);
+    }
+
+    /* RIGHT DETAIL PANEL */
+    .detail-panel {
+      overflow-y: auto;
+      background-color: var(--bg-surface);
+    }
+
+    .detail-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border-color);
+      background-color: var(--bg-page);
+      display: grid;
+      grid-template-columns: 1fr 100px;
+      align-items: start;
+      gap: 16px;
+    }
+
+    .detail-student-info h2 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+    }
+
+    .detail-student-meta {
+      display: flex;
+      gap: 16px;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .risk-metric-box {
+      border: 2px solid var(--border-color);
+      background-color: var(--bg-surface);
+      text-align: center;
+      padding: 12px 8px;
+    }
+
+    .risk-metric-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .risk-metric-value {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .risk-metric-value.high { color: var(--status-high-text); }
+    .risk-metric-value.medium { color: var(--status-med-text); }
+    .risk-metric-value.low { color: var(--status-low-text); }
+
+    /* DIAGNOSTIC CONTAINER */
+    .detail-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .detail-section-title {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .detail-section-title::after {
+      content: '';
+      flex-grow: 1;
+      height: 1px;
+      background-color: var(--border-color);
+    }
+
+    /* TELEMETRY CHART BARS */
+    .telemetry-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .telemetry-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 45px;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .telemetry-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .telemetry-bar-bg {
+      height: 8px;
+      background-color: #f3f4f6;
+      border: 1px solid var(--border-color);
+      position: relative;
+    }
+
+    .telemetry-bar-fill {
+      height: 100%;
+      background-color: var(--border-color);
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .telemetry-bar-fill.high { background-color: var(--status-high-border); }
+    .telemetry-bar-fill.medium { background-color: var(--status-med-border); }
+    .telemetry-bar-fill.low { background-color: var(--status-low-border); }
+
+    .telemetry-val {
+      text-align: right;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* TIMELINE DIAGNOSTICS */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 16px;
+      position: relative;
+    }
+
+    .timeline-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 4px;
+    }
+
+    .timeline-dot {
+      width: 8px;
+      height: 8px;
+      border: 1.5px solid var(--border-color);
+      background-color: var(--bg-surface);
+    }
+
+    .timeline-dot.alert {
+      background-color: var(--status-high-border);
+    }
+
+    .timeline-line {
+      width: 1px;
+      flex-grow: 1;
+      background-color: var(--border-color);
+      margin-top: 6px;
+    }
+
+    .timeline-item:last-child .timeline-line {
+      display: none;
+    }
+
+    .timeline-content {
+      padding-bottom: 8px;
+    }
+
+    .timeline-date {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 2px;
+    }
+
+    .timeline-title {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .timeline-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* INTERVENTION CONSOLE */
+    .intervention-card {
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-page);
+      padding: 16px;
+    }
+
+    .intervention-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      padding: 8px;
+      border: 1px solid transparent;
+      transition: background-color 0.1s ease;
+    }
+
+    .checkbox-item:hover {
+      background-color: #f1f3f5;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--border-color);
+      margin-top: 2px;
+      cursor: pointer;
+      outline: none;
+      position: relative;
+      background-color: var(--bg-surface);
+    }
+
+    .checkbox-item input[type="checkbox"]:checked {
+      background-color: var(--border-color);
+    }
+
+    .checkbox-item input[type="checkbox"]:checked::after {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 4px;
+      height: 8px;
+      border: solid var(--bg-surface);
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .checkbox-label {
+      font-size: 13px;
+    }
+
+    .checkbox-label span {
+      display: block;
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* NOTES FIELD */
+    .notes-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 80px;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      font-family: inherit;
+      font-size: 13px;
+      resize: vertical;
+      outline: none;
+    }
+
+    textarea:focus {
+      background-color: #fafbfc;
+    }
+
+    /* ACTIONS BUTTONS */
+    .action-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-action {
+      flex-grow: 1;
+      height: 42px;
+      border: 1px solid var(--border-color);
+      background-color: var(--text-primary);
+      color: var(--bg-surface);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-action:hover {
+      background-color: #2b2d30;
+    }
+
+    .btn-action.secondary {
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+    }
+
+    .btn-action.secondary:hover {
+      background-color: var(--accent-active);
+    }
+
+    /* CUSTOM NOTIFICATIONS */
+    .notification {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background-color: var(--text-primary);
+      color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      padding: 16px 24px;
+      font-size: 13px;
+      z-index: 100;
+      display: none;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    /* SCREEN SIZE NOT SUPPORTED BANNER (Mobile / Tablet Overlay) */
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+      .detail-panel {
+        display: none; /* In simpler version, we could toggle this via class */
+      }
+      .mobile-alert-banner {
+        display: block !important;
+      }
+    }
+
+    .mobile-alert-banner {
+      display: none;
+      background-color: var(--text-primary);
+      color: var(--bg-surface);
+      padding: 12px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    /* RESPONSIVE SCROLLBARS */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f3f5;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--text-secondary);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-primary);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- MOBILE ONLY WARNING -->
+    <div class="mobile-alert-banner telemetry">
+      ⚠️ GIAO DIỆN CHUYÊN SÂU. HÃY SỬ DỤNG TRÊN THIẾT BỊ MÀN HÌNH LỚN ĐỂ CÓ TRẢI NGHIỆM ĐẦY ĐỦ.
+    </div>
+
+    <!-- MAIN HEADER -->
+    <header>
+      <div class="brand-section">
+        <h1 class="brand-title">EWS // Academic Early Warning System</h1>
+        <div class="brand-divider"></div>
+        <div class="system-status">
+          <span class="status-dot"></span>
+          <span>AI Model EWS-v4.2 // Active</span>
+        </div>
+      </div>
+      <div class="quick-stats">
+        <div class="stat-box">
+          <span class="stat-label">Tổng Sinh Viên</span>
+          <span class="stat-value telemetry">1,248</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Cảnh Báo Đỏ (Cao)</span>
+          <span class="stat-value telemetry" style="color: var(--status-high-text)">34</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Cảnh Báo Vàng (Trung Bình)</span>
+          <span class="stat-value telemetry" style="color: var(--status-med-text)">72</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT BODY -->
+    <main>
+      <!-- LEFT STUDENT LIST -->
+      <section class="panel directory-panel">
+        <div class="toolbar">
+          <div class="toolbar-row">
+            <div class="search-wrapper">
+              <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="searchInput" class="search-input" placeholder="Tìm tên sinh viên, mã số, hoặc ngành học...">
+            </div>
+            
+            <div class="filter-group">
+              <button class="btn-filter active" data-filter="all">Tất cả</button>
+              <button class="btn-filter" data-filter="high">
+                Nguy cơ cao
+                <span class="badge-count telemetry">2</span>
+              </button>
+              <button class="btn-filter" data-filter="medium">
+                Trung bình
+                <span class="badge-count telemetry">2</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table id="studentTable">
+            <thead>
+              <tr>
+                <th style="width: 40%">Sinh Viên</th>
+                <th style="width: 25%">Ngành Học</th>
+                <th style="width: 20%" class="telemetry">Chỉ Số Rủi Ro</th>
+                <th style="width: 15%">Cấp Độ</th>
+              </tr>
+            </thead>
+            <tbody id="studentTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- RIGHT DIAGNOSTIC PANEL -->
+      <aside class="panel detail-panel" id="detailPanel">
+        <!-- RENDERED BY JAVASCRIPT -->
+      </aside>
+    </main>
+  </div>
+
+  <!-- NOTIFICATION TOAST -->
+  <div id="toast" class="notification telemetry">
+    [PROCESS INITIATED] ĐÃ CẬP NHẬT PHÁC ĐỒ CAN THIỆP.
+  </div>
+
+  <!-- INLINE DATA & JAVASCRIPT LOGIC -->
+  <script>
+    // System Data Mockup (Anti-Slop structure: clean, descriptive, analytical)
+    const studentsData = [
+      {
+        id: "SV2026-0421",
+        name: "Nguyễn Minh Anh",
+        course: "Công nghệ thông tin",
+        gpa: "1.8",
+        gpaTrend: "down",
+        riskScore: 88,
+        telemetry: {
+          academic: 92,
+          attendance: 85,
+          tuition: 30,
+          engagement: 75
+        },
+        timeline: [
+          { date: "02/06/2026", title: "Cảnh báo vắng học liên tiếp", desc: "Không điểm danh học phần Cấu trúc dữ liệu 3 buổi liên tiếp.", level: "high" },
+          { date: "24/05/2026", title: "GPA kỳ giữa giảm dưới chuẩn", desc: "GPA rơi xuống 1.8 (Chuẩn tối thiểu: 2.0).", level: "high" },
+          { date: "15/05/2026", title: "Bỏ lỡ bài kiểm tra thực hành", desc: "Vắng kiểm tra thực hành môn Lập trình hướng đối tượng.", level: "medium" },
+          { date: "10/04/2026", title: "Giảm sút hoạt động LMS", desc: "Thời gian đăng nhập học liệu số giảm 65% so với tuần trước.", level: "low" }
+        ],
+        interventions: [
+          { key: "warn", label: "Gửi công văn cảnh báo học tập chính thức", checked: true, note: "Đã gửi email tự động và SMS đến phụ huynh." },
+          { key: "meet", label: "Lập lịch hẹn tư vấn 1-1 với cố vấn học tập", checked: false, note: "Cần chọn lịch trực tiếp." },
+          { key: "peer", label: "Phân công nhóm bạn cùng tiến hỗ trợ học thuật", checked: false, note: "Gợi ý nhóm sinh viên giỏi môn Cấu trúc dữ liệu." }
+        ],
+        counselorNote: "Sinh viên có dấu hiệu chán nản do mất gốc môn cơ sở ngành. Đã liên hệ trực tiếp nhưng chưa nhận phản hồi chính thức."
+      },
+      {
+        id: "SV2026-0912",
+        name: "Trần Thị Thanh Thảo",
+        course: "Quản trị kinh doanh",
+        gpa: "2.4",
+        gpaTrend: "stable",
+        riskScore: 81,
+        telemetry: {
+          academic: 40,
+          attendance: 90,
+          tuition: 95,
+          engagement: 50
+        },
+        timeline: [
+          { date: "01/06/2026", title: "Hạn đóng học phí quá hạn kì II", desc: "Hệ thống ghi nhận quá hạn thanh toán đợt 2 học phí học kì II.", level: "high" },
+          { date: "18/05/2026", title: "Đơn xin gia hạn học phí", desc: "Sinh viên gửi yêu cầu hỗ trợ gia hạn nhưng chưa bổ sung hồ sơ chứng minh hoàn cảnh tài chính.", level: "medium" },
+          { date: "05/04/2026", title: "Vắng học các buổi tối", desc: "Tỉ lệ chuyên cần các môn lớp tối sụt giảm mạnh.", level: "medium" }
+        ],
+        interventions: [
+          { key: "financial", label: "Đề xuất xét duyệt gói hỗ trợ học phí vượt khó", checked: false, note: "Phòng Công tác sinh viên xem xét." },
+          { key: "extend", label: "Tạm giãn thời hạn nợ học phí để tránh đình chỉ học", checked: true, note: "Đã phê duyệt gia hạn thêm 15 ngày." },
+          { key: "parttime", label: "Tư vấn giới thiệu việc làm bán thời gian phù hợp lịch học", checked: false, note: "Liên kết với trung tâm hỗ trợ sinh viên." }
+        ],
+        counselorNote: "Sinh viên đang đi làm ca tối để trang trải cuộc sống gia đình, dẫn đến việc nợ học phí và quá tải sinh hoạt."
+      },
+      {
+        id: "SV2026-1105",
+        name: "Phạm Hoàng Nam",
+        course: "Kỹ thuật Cơ điện tử",
+        gpa: "2.1",
+        gpaTrend: "down",
+        riskScore: 65,
+        telemetry: {
+          academic: 70,
+          attendance: 55,
+          tuition: 10,
+          engagement: 88
+        },
+        timeline: [
+          { date: "04/06/2026", title: "Không tham gia thực hành", desc: "Vắng mặt tại phòng lab thí nghiệm Vật lý 2.", level: "medium" },
+          { date: "28/05/2026", title: "Không truy cập thư viện trong 45 ngày", desc: "Hệ thống ghi nhận không sử dụng thẻ thư viện hoặc tài liệu số.", level: "low" },
+          { date: "12/05/2026", title: "Nộp bài tập muộn", desc: "Nộp bài tập thiết kế hệ thống muộn 3 ngày trên LMS.", level: "low" }
+        ],
+        interventions: [
+          { key: "meet", label: "Mời lên gặp trợ lý đào tạo khoa", checked: false, note: "Nhắc nhở về quy chế thực hành phòng thí nghiệm." },
+          { key: "peer", label: "Đưa vào danh sách kèm cặp học tập chuyên ngành", checked: true, note: "Đã chỉ định SV khoá trên hỗ trợ hướng dẫn làm báo cáo Lab." }
+        ],
+        counselorNote: "Chưa tập trung cao cho chuyên ngành. Có biểu hiện sao nhãng do dành quá nhiều thời gian cho các hoạt động ngoại khóa ngoài trường."
+      },
+      {
+        id: "SV2026-0038",
+        name: "Lê Văn Đạt",
+        course: "Ngôn ngữ Anh",
+        gpa: "2.2",
+        gpaTrend: "up",
+        riskScore: 58,
+        telemetry: {
+          academic: 50,
+          attendance: 78,
+          tuition: 20,
+          engagement: 68
+        },
+        timeline: [
+          { date: "30/05/2026", title: "Tỉ lệ vắng học lý thuyết tăng", desc: "Số giờ vắng học lý thuyết tăng vượt mức 20% tổng thời lượng môn học.", level: "medium" },
+          { date: "14/05/2026", title: "Không nộp bài tự học cá nhân", desc: "Không hoàn thành 2 bài đánh giá chặng trên hệ thống LMS trực tuyến.", level: "medium" }
+        ],
+        interventions: [
+          { key: "warn", label: "Gửi email cảnh báo vi phạm chuyên cần", checked: true, note: "Đã gửi cảnh báo cấp độ 1." },
+          { key: "alternate", label: "Tư vấn chuyển đổi sang ca học hoặc hình thức học kết hợp", checked: false, note: "Xem xét phương án hỗ trợ sinh viên ở xa." }
+        ],
+        counselorNote: "Quãng đường di chuyển đi học quá xa (hơn 25km). Gặp khó khăn trong việc duy trì đi học ca sáng sớm (ca 1)."
+      },
+      {
+        id: "SV2026-0156",
+        name: "Vũ Hoàng Lâm",
+        course: "Khoa học dữ liệu",
+        gpa: "3.1",
+        gpaTrend: "up",
+        riskScore: 28,
+        telemetry: {
+          academic: 20,
+          attendance: 25,
+          tuition: 10,
+          engagement: 30
+        },
+        timeline: [
+          { date: "15/05/2026", title: "Giảm nhẹ GPA môn giải tích", desc: "Điểm kiểm tra ngắn hạn môn Giải tích 2 sụt giảm nhẹ.", level: "low" }
+        ],
+        interventions: [
+          { key: "peer", label: "Giới thiệu câu lạc bộ nghiên cứu học thuật", checked: false, note: "Thúc đẩy tiềm năng nghiên cứu khoa học." }
+        ],
+        counselorNote: "Sinh viên có học lực tốt, chỉ số rủi ro thấp. Chỉ cần khuyến khích hoạt động tự học."
+      }
+    ];
+
+    let currentSelectedId = "SV2026-0421";
+    let activeFilter = "all";
+    let searchQuery = "";
+
+    // DOM ELEMENTS
+    const tableBody = document.getElementById("studentTableBody");
+    const detailPanel = document.getElementById("detailPanel");
+    const searchInput = document.getElementById("searchInput");
+    const filterButtons = document.querySelectorAll(".btn-filter");
+    const toast = document.getElementById("toast");
+
+    // INITIALIZATION
+    function init() {
+      renderTable();
+      renderDetail(currentSelectedId);
+      setupEventListeners();
+    }
+
+    // EVENT LISTENERS
+    function setupEventListeners() {
+      // Search event
+      searchInput.addEventListener("input", (e) => {
+        searchQuery = e.target.value.toLowerCase().trim();
+        renderTable();
+      });
+
+      // Filter events
+      filterButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          filterButtons.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          activeFilter = btn.getAttribute("data-filter");
+          renderTable();
+        });
+      });
+    }
+
+    // GET RISK BADGE HTML
+    function getRiskBadge(score) {
+      if (score >= 80) {
+        return `<span class="risk-badge high telemetry">CAO // ${score}%</span>`;
+      } else if (score >= 50) {
+        return `<span class="risk-badge medium telemetry">TRUNG BÌNH // ${score}%</span>`;
+      } else {
+        return `<span class="risk-badge low telemetry">THẤP // ${score}%</span>`;
+      }
+    }
+
+    // FILTER STUDENTS BASED ON CRITERIA
+    function getFilteredStudents() {
+      return studentsData.filter(student => {
+        // Search condition
+        const matchesSearch = student.name.toLowerCase().includes(searchQuery) ||
+                              student.id.toLowerCase().includes(searchQuery) ||
+                              student.course.toLowerCase().includes(searchQuery);
+
+        // Filter condition
+        if (!matchesSearch) return false;
+        
+        if (activeFilter === "high") {
+          return student.riskScore >= 80;
+        } else if (activeFilter === "medium") {
+          return student.riskScore >= 50 && student.riskScore < 80;
+        }
+        return true;
+      });
+    }
+
+    // RENDER TABLE
+    function renderTable() {
+      const filtered = getFilteredStudents();
+      tableBody.innerHTML = "";
+
+      if (filtered.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="4" style="text-align: center; padding: 32px; color: var(--text-secondary);" class="telemetry">
+              [NO RESULTS FOUND] Không có dữ liệu trùng khớp.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filtered.forEach(student => {
+        const isSelected = student.id === currentSelectedId;
+        const initials = student.name.split(' ').map(n => n[0]).slice(-2).join('');
+        
+        const tr = document.createElement("tr");
+        tr.className = isSelected ? "selected" : "";
+        tr.setAttribute("data-id", student.id);
+        
+        tr.innerHTML = `
+          <td>
+            <div class="student-meta-cell">
+              <div class="student-avatar">${initials}</div>
+              <div>
+                <div class="student-name">${student.name}</div>
+                <div class="student-id telemetry">${student.id}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div style="font-weight: 500;">${student.course}</div>
+          </td>
+          <td>
+            <div class="telemetry" style="font-weight: 700;">
+              Chỉ số rủi ro: ${student.riskScore}%
+            </div>
+          </td>
+          <td>
+            ${getRiskBadge(student.riskScore)}
+          </td>
+        `;
+
+        tr.addEventListener("click", () => {
+          selectStudent(student.id);
+        });
+
+        tableBody.appendChild(tr);
+      });
+    }
+
+    // SELECT STUDENT ACTION
+    function selectStudent(id) {
+      currentSelectedId = id;
+      
+      // Update table selections
+      const rows = tableBody.querySelectorAll("tr");
+      rows.forEach(row => {
+        if (row.getAttribute("data-id") === id) {
+          row.classList.add("selected");
+        } else {
+          row.classList.remove("selected");
+        }
+      });
+
+      renderDetail(id);
+    }
+
+    // RENDER RIGHT DETAIL SIDE
+    function renderDetail(studentId) {
+      const student = studentsData.find(s => s.id === studentId);
+      if (!student) {
+        detailPanel.innerHTML = `
+          <div style="padding: 48px; text-align: center; color: var(--text-secondary);" class="telemetry">
+            [SYS DATA ERROR] Hãy chọn một sinh viên ở bảng danh sách để phân tích.
+          </div>
+        `;
+        return;
+      }
+
+      // Generate Risk Metric class
+      let riskClass = "low";
+      if (student.riskScore >= 80) riskClass = "high";
+      else if (student.riskScore >= 50) riskClass = "medium";
+
+      // Render timeline HTML
+      let timelineHTML = "";
+      student.timeline.forEach(item => {
+        timelineHTML += `
+          <div class="timeline-item">
+            <div class="timeline-node">
+              <div class="timeline-dot ${item.level === 'high' ? 'alert' : ''}"></div>
+              <div class="timeline-line"></div>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-date telemetry">${item.date}</div>
+              <div class="timeline-title">${item.title}</div>
+              <div class="timeline-desc">${item.desc}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      // Render Interventions checklist
+      let interventionHTML = "";
+      student.interventions.forEach((item, index) => {
+        interventionHTML += `
+          <label class="checkbox-item">
+            <input type="checkbox" id="checkbox-${student.id}-${index}" ${item.checked ? 'checked' : ''} onchange="updateInterventionChecked('${student.id}', ${index}, this.checked)">
+            <div class="checkbox-label">
+              ${item.label}
+              <span>${item.note}</span>
+            </div>
+          </label>
+        `;
+      });
+
+      detailPanel.innerHTML = `
+        <div class="detail-header">
+          <div class="detail-student-info">
+            <h2>${student.name}</h2>
+            <div class="detail-student-meta telemetry">
+              <span>Mã: ${student.id}</span>
+              <span>•</span>
+              <span>Lớp: ${student.course}</span>
+            </div>
+          </div>
+          <div class="risk-metric-box">
+            <div class="risk-metric-label">MỨC ĐỘ RỦI RO</div>
+            <div class="risk-metric-value ${riskClass} telemetry">${student.riskScore}%</div>
+          </div>
+        </div>
+
+        <div class="detail-body">
+          <!-- CORE SYSTEM TELEMETRY -->
+          <div>
+            <div class="detail-section-title telemetry">PHÂN TÍCH VECTOR RỦI RO // CHỈ SỐ AI</div>
+            <div class="telemetry-grid">
+              <div class="telemetry-row">
+                <span class="telemetry-label">Học thuật (GPA/Thi)</span>
+                <div class="telemetry-bar-bg">
+                  <div class="telemetry-bar-fill ${getSeverityClass(student.telemetry.academic)}" style="width: ${student.telemetry.academic}%"></div>
+                </div>
+                <span class="telemetry-val telemetry">${student.telemetry.academic}%</span>
+              </div>
+              
+              <div class="telemetry-row">
+                <span class="telemetry-label">Chuyên cần (Điểm danh)</span>
+                <div class="telemetry-bar-bg">
+                  <div class="telemetry-bar-fill ${getSeverityClass(student.telemetry.attendance)}" style="width: ${student.telemetry.attendance}%"></div>
+                </div>
+                <span class="telemetry-val telemetry">${student.telemetry.attendance}%</span>
+              </div>
+
+              <div class="telemetry-row">
+                <span class="telemetry-label">Tài chính (Học phí)</span>
+                <div class="telemetry-bar-bg">
+                  <div class="telemetry-bar-fill ${getSeverityClass(student.telemetry.tuition)}" style="width: ${student.telemetry.tuition}%"></div>
+                </div>
+                <span class="telemetry-val telemetry">${student.telemetry.tuition}%</span>
+              </div>
+
+              <div class="telemetry-row">
+                <span class="telemetry-label">Tương tác hệ thống LMS</span>
+                <div class="telemetry-bar-bg">
+                  <div class="telemetry-bar-fill ${getSeverityClass(student.telemetry.engagement)}" style="width: ${student.telemetry.engagement}%"></div>
+                </div>
+                <span class="telemetry-val telemetry">${student.telemetry.engagement}%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- BEHAVIOR TIMELINE -->
+          <div>
+            <div class="detail-section-title telemetry">NHẬT KÝ HÀNH VI HỆ THỐNG GHI NHẬN</div>
+            <div class="timeline">
+              ${timelineHTML}
+            </div>
+          </div>
+
+          <!-- ACTIONS INTERVENTION CONSOLE -->
+          <div>
+            <div class="detail-section-title telemetry">PHÁC ĐỒ CAN THIỆP ĐỀ XUẤT</div>
+            <div class="intervention-card">
+              <div class="intervention-options">
+                ${interventionHTML}
+              </div>
+
+              <div class="notes-wrapper">
+                <div class="telemetry" style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Ghi chú cố vấn học tập</div>
+                <textarea id="counselorNoteInput" placeholder="Nhập cập nhật tình trạng gặp mặt hoặc ghi chú bổ sung...">${student.counselorNote || ''}</textarea>
+              </div>
+
+              <div class="action-row">
+                <button class="btn-action secondary" onclick="saveCounselorNote('${student.id}')">Lưu ghi chú</button>
+                <button class="btn-action" onclick="triggerInterventionWorkflow('${student.id}')">Kích hoạt can thiệp</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // UTILITIES
+    function getSeverityClass(val) {
+      if (val >= 80) return "high";
+      if (val >= 50) return "medium";
+      return "low";
+    }
+
+    // UPDATE DATA STATE
+    window.updateInterventionChecked = function(studentId, index, isChecked) {
+      const student = studentsData.find(s => s.id === studentId);
+      if (student) {
+        student.interventions[index].checked = isChecked;
+      }
+    };
+
+    window.saveCounselorNote = function(studentId) {
+      const student = studentsData.find(s => s.id === studentId);
+      const input = document.getElementById("counselorNoteInput");
+      if (student && input) {
+        student.counselorNote = input.value;
+        showToast("[DATA SAVE] Đã cập nhật ghi chú cố vấn học tập thành công.");
+      }
+    };
+
+    window.triggerInterventionWorkflow = function(studentId) {
+      const student = studentsData.find(s => s.id === studentId);
+      if (student) {
+        const checkedInterventions = student.interventions.filter(i => i.checked);
+        if (checkedInterventions.length === 0) {
+          showToast("[SYS WARNING] Hãy chọn ít nhất một biện pháp can thiệp để kích hoạt.");
+          return;
+        }
+        
+        // Simulating workflow activation
+        const names = checkedInterventions.map(i => i.label).join(", ");
+        console.log(`Triggering workflow for ${student.name} with interventions: ${names}`);
+        
+        showToast(`[WORKFLOW RUNNING] Phác đồ can thiệp học tập của ${student.name} đã được kích hoạt.`);
+      }
+    };
+
+    // TOAST NOTIFICATION
+    function showToast(message) {
+      toast.textContent = message;
+      toast.style.display = "block";
+      setTimeout(() => {
+        toast.style.display = "none";
+      }, 4000);
+    }
+
+    // EXECUTE
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>

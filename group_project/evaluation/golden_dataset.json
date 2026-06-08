@@ -1,17 +1,82 @@
 [
   {
     "question": "Hình phạt cho tội tàng trữ trái phép chất ma tuý theo Điều 249 Bộ luật Hình sự?",
-    "expected_answer": "Phạt tù từ 1 đến 5 năm đối với trường hợp tàng trữ từ 1g đến dưới 5g heroin hoặc cocaine, hoặc chất ma tuý khác với khối lượng tương đương.",
-    "expected_context": "Bộ luật Hình sự 2015, Điều 249"
+    "expected_answer": "Hình phạt tù từ 01 năm đến 05 năm đối với tàng trữ nhỏ lẻ (từ 0.1g đến dưới 5g heroin, cocaine, meth, MDMA). Các khung phạt cao hơn tùy thuộc vào khối lượng chất ma túy tàng trữ là 05-10 năm, 10-15 năm, 15-20 năm hoặc tù chung thân.",
+    "expected_context": "bo-luat-hinh-su.md, Điều 249"
   },
   {
     "question": "Luật Phòng chống ma tuý 2021 quy định những hình thức cai nghiện nào?",
-    "expected_answer": "Cai nghiện tự nguyện tại gia đình, cai nghiện tự nguyện tại cộng đồng, cai nghiện tự nguyện tại cơ sở cai nghiện, và cai nghiện bắt buộc tại cơ sở cai nghiện.",
-    "expected_context": "Luật Phòng chống ma tuý 2021, Chương V"
+    "expected_answer": "Các biện pháp cai nghiện gồm có: Cai nghiện ma túy tự nguyện (thực hiện tại gia đình, cộng đồng hoặc tại cơ sở cai nghiện ma túy) và Cai nghiện ma túy bắt buộc (thực hiện tại cơ sở cai nghiện ma túy công lập).",
+    "expected_context": "luat-phong-chong-ma-tuy-2021.md, Điều 28"
   },
   {
-    "question": "Danh mục các chất ma tuý thuộc nhóm I theo quy định pháp luật Việt Nam gồm những chất nào?",
-    "expected_answer": "Nhóm I gồm các chất ma tuý tuyệt đối cấm sử dụng trong y học và đời sống, bao gồm heroin, cocaine, methamphetamine, MDMA (ecstasy), cannabis (cần sa), và các chất tương tự.",
-    "expected_context": "Nghị định 57/2022/NĐ-CP, Phụ lục I"
+    "question": "Các hành vi nào bị nghiêm cấm trong Luật Phòng, chống ma túy 2021?",
+    "expected_answer": "Trồng cây chứa chất ma túy; sản xuất, tàng trữ, vận chuyển, mua bán trái phép chất ma túy; sử dụng, tổ chức sử dụng trái phép; chống lại việc xét nghiệm; cưỡng bức hoặc lôi kéo người khác sử dụng.",
+    "expected_context": "luat-phong-chong-ma-tuy-2021.md, Điều 5"
+  },
+  {
+    "question": "Người nghiện ma túy từ đủ 12 tuổi đến dưới 18 tuổi bị đưa vào cơ sở cai nghiện bắt buộc trong trường hợp nào?",
+    "expected_answer": "Khi thuộc một trong các trường hợp: Không đăng ký, không thực hiện hoặc tự ý chấm dứt cai nghiện tự nguyện; trong thời gian cai nghiện tự nguyện bị phát hiện sử dụng ma túy; nghiện chất dạng thuốc phiện không đăng ký, không thực hiện hoặc tự ý chấm dứt điều trị bằng thuốc thay thế.",
+    "expected_context": "luat-phong-chong-ma-tuy-2021.md, Điều 33"
+  },
+  {
+    "question": "Tội trồng cây thuốc phiện quy định hình phạt thế nào theo Điều 247 Bộ luật hình sự?",
+    "expected_answer": "Phạt tù từ 06 tháng đến 03 năm đối với trường hợp trồng từ 500 đến dưới 3.000 cây, hoặc đã được giáo dục 02 lần, hoặc đã bị xử phạt hành chính. Phạt tù từ 03 năm đến 07 năm nếu phạm tội có tổ chức, số lượng 3.000 cây trở lên hoặc tái phạm nguy hiểm. Người phạm tội còn có thể bị phạt tiền và được miễn trách nhiệm nếu tự nguyện phá bỏ.",
+    "expected_context": "bo-luat-hinh-su.md, Điều 247"
+  },
+  {
+    "question": "Tội sản xuất trái phép chất ma túy bị xử phạt như thế nào theo Điều 248 Bộ luật Hình sự?",
+    "expected_answer": "Khung phạt cơ bản là phạt tù từ 02 năm đến 07 năm. Các khung phạt tăng nặng gồm 07-15 năm, 15-20 năm, và cao nhất là 20 năm, tù chung thân hoặc tử hình tùy thuộc vào khối lượng ma túy sản xuất và tính chất nghiêm trọng.",
+    "expected_context": "bo-luat-hinh-su.md, Điều 248"
+  },
+  {
+    "question": "Đối tượng nào bị áp dụng biện pháp xử lý hành chính đưa vào cơ sở cai nghiện bắt buộc?",
+    "expected_answer": "Người nghiện ma túy từ đủ 18 tuổi trở lên bị áp dụng biện pháp đưa vào cơ sở cai nghiện bắt buộc khi: Không đăng ký, không thực hiện hoặc tự ý chấm dứt cai nghiện tự nguyện; trong thời gian cai tự nguyện bị phát hiện sử dụng ma túy; không điều trị hoặc tự ý chấm dứt điều trị chất dạng thuốc phiện bằng thuốc thay thế; trong thời gian quản lý sau cai mà tái nghiện.",
+    "expected_context": "luat-phong-chong-ma-tuy-2021.md, Điều 32"
+  },
+  {
+    "question": "Tội mua bán trái phép chất ma túy có khung hình phạt cao nhất là gì?",
+    "expected_answer": "Khung hình phạt cao nhất đối với tội mua bán trái phép chất ma túy tại Điều 251 Bộ luật Hình sự là phạt tù 20 năm, tù chung thân hoặc tử hình.",
+    "expected_context": "bo-luat-hinh-su.md, Điều 251"
+  },
+  {
+    "question": "Tội tổ chức sử dụng trái phép chất ma túy bị xử phạt thế nào theo Bộ luật hình sự?",
+    "expected_answer": "Theo Điều 255, hình phạt cơ bản là tù từ 02 năm đến 07 năm. Các khung tăng nặng gồm phạt tù từ 07-15 năm, 15-20 năm hoặc tù chung thân đối với các hành vi có tổ chức, phạm tội nhiều lần, đối với nhiều người hoặc đối với người dưới 18 tuổi.",
+    "expected_context": "bo-luat-hinh-su.md, Điều 255"
+  },
+  {
+    "question": "Xét nghiệm chất ma túy trong cơ thể được thực hiện đối với những đối tượng nào?",
+    "expected_answer": "Xét nghiệm chất ma túy trong cơ thể thực hiện đối với: Người bị phát hiện sử dụng ma túy; người có căn cứ cho rằng đã sử dụng; người đang trong thời hạn quản lý sử dụng ma túy; người đang trong thời gian giáo dục tại xã/cai nghiện/điều trị thay thế/quản lý sau cai.",
+    "expected_context": "luat-phong-chong-ma-tuy-2021.md, Điều 22"
+  },
+  {
+    "question": "Thời hạn quản lý người sử dụng trái phép chất ma túy là bao lâu?",
+    "expected_answer": "Thời hạn quản lý người sử dụng trái phép chất ma túy là 01 năm kể từ ngày Chủ tịch Ủy ban nhân dân cấp xã ra quyết định quản lý.",
+    "expected_context": "luat-phong-chong-ma-tuy-2021.md, Điều 23"
+  },
+  {
+    "question": "Quy trình cai nghiện ma túy gồm những giai đoạn nào theo Điều 29?",
+    "expected_answer": "Quy trình gồm 5 giai đoạn: a) Tiếp nhận, phân loại; b) Điều trị cắt cơn, giải độc, điều trị rối loạn tâm thần; c) Giáo dục, tư vấn, phục hồi hành vi, nhân cách; d) Lao động trị liệu, học nghề; đ) Chuẩn bị tái hòa nhập cộng đồng.",
+    "expected_context": "luat-phong-chong-ma-tuy-2021.md, Điều 29"
+  },
+  {
+    "question": "Tội tàng trữ khay, ketamine hay ma túy tổng hợp khác từ 100g trở lên bị phạt tù bao nhiêu năm?",
+    "expected_answer": "Theo Điều 249 Bộ luật Hình sự, nếu tàng trữ Heroine, Cocaine, Methamphetamine, Amphetamine, MDMA có khối lượng 100 gam trở lên thì bị phạt tù 15 năm đến 20 năm hoặc tù chung thân.",
+    "expected_context": "bo-luat-hinh-su.md, Điều 249"
+  },
+  {
+    "question": "Cơ quan nào có thẩm quyền xác định tình trạng nghiện ma túy theo Thông tư liên tịch 2015?",
+    "expected_answer": "Người có thẩm quyền xác định tình trạng nghiện ma túy là bác sỹ hoặc y sỹ có chứng chỉ hành nghề và chứng chỉ/chứng nhận tập huấn về chẩn đoán điều trị cắt cơn nghiện ma túy, đang làm việc tại cơ sở y tế quân y, cơ sở khám chữa bệnh của công an, phòng y tế cơ sở cai nghiện bắt buộc hoặc trạm y tế cấp xã trở lên.",
+    "expected_context": "thong-tu-lien-tich-2015.md, Điều 3"
+  },
+  {
+    "question": "Chủ tịch Ủy ban nhân dân cấp xã có trách nhiệm gì trong quản lý người sử dụng trái phép chất ma túy?",
+    "expected_answer": "Có trách nhiệm ra quyết định và tổ chức quản lý người sử dụng trái phép chất ma túy cư trú tại địa phương trong thời hạn 03 ngày làm việc kể từ khi nhận được kết quả xét nghiệm dương tính, đồng thời ra quyết định dừng quản lý trong các trường hợp luật định.",
+    "expected_context": "luat-phong-chong-ma-tuy-2021.md, Điều 23"
+  },
+  {
+    "question": "Trách nhiệm của gia đình người sử dụng trái phép chất ma túy là gì?",
+    "expected_answer": "Quản lý, giáo dục người sử dụng ma túy, ngăn chặn hành vi sử dụng trái phép; cung cấp thông tin cho công an; ngăn chặn hành vi gây mất trật tự; phối hợp đưa đi xét nghiệm chất ma túy trong cơ thể.",
+    "expected_context": "luat-phong-chong-ma-tuy-2021.md, Điều 25"
   }
 ]
