@@ -1,164 +1,124 @@
 """
-Task 4 — Chunking & Indexing vào Vector Store.
-
-Hướng dẫn:
-    1. Đọc toàn bộ markdown files từ data/standardized/
-    2. Chọn 1 chunking strategy (giải thích lý do)
-    3. Chọn 1 embedding model (giải thích lý do)
-    4. Index vào vector store (Weaviate khuyến cáo)
-
-Chunking options (langchain-text-splitters):
-    - RecursiveCharacterTextSplitter: an toàn, phổ biến
-    - MarkdownHeaderTextSplitter: tốt cho file có heading
-    - SemanticChunker: dùng embedding để tách (nâng cao)
-
-Embedding model options:
-    - sentence-transformers/all-MiniLM-L6-v2 (384 dim, nhẹ)
-    - BAAI/bge-m3 (1024 dim, multilingual, tốt cho tiếng Việt)
-    - OpenAI text-embedding-3-small (1536 dim, API)
-
-Vector store options:
-    - Weaviate (khuyến cáo: hỗ trợ hybrid search built-in)
-    - ChromaDB (đơn giản, local)
-    - FAISS (chỉ dense search)
-
-Cài đặt:
-    pip install langchain-text-splitters sentence-transformers weaviate-client
+Task 4 — Chunking & Indexing vào Vector Store sử dụng OpenAI Embedding.
 """
 
+import os
+import json
 from pathlib import Path
+from openai import OpenAI
+from dotenv import load_dotenv
+
+# Load env variables
+load_dotenv()
 
 STANDARDIZED_DIR = Path(__file__).parent.parent / "data" / "standardized"
 
+# Cấu hình tham số RAG
+CHUNK_SIZE = 500
+CHUNK_OVERLAP = 50
+CHUNKING_METHOD = "recursive"
 
-# =============================================================================
-# CONFIGURATION — Giải thích lựa chọn của bạn trong comment
-# =============================================================================
+# Cấu hình OpenAI Embedding Model
+EMBEDDING_MODEL = "text-embedding-3-small"
+EMBEDDING_DIM = 1536
+VECTOR_STORE = "local_json"
 
-# TODO: Chọn chunking strategy và giải thích vì sao
-CHUNK_SIZE = 500        # Vì sao chọn 500? ...
-CHUNK_OVERLAP = 50      # Vì sao chọn 50? ...
-CHUNKING_METHOD = "recursive"  # "recursive" | "markdown_header" | "semantic"
+# Khởi tạo OpenAI client
+api_key = os.environ.get("OPENAI_API_KEY")
+if not api_key:
+    raise ValueError(
+        "Chưa tìm thấy OPENAI_API_KEY trong file .env hoặc biến môi trường. "
+        "Hãy điền OPENAI_API_KEY vào file .env ở thư mục gốc."
+    )
 
-# TODO: Chọn embedding model và giải thích
-EMBEDDING_MODEL = "BAAI/bge-m3"  # Vì sao? Multilingual, tốt cho tiếng Việt
-EMBEDDING_DIM = 1024
+client = OpenAI(api_key=api_key)
 
-# TODO: Chọn vector store
-VECTOR_STORE = "weaviate"  # "weaviate" | "chromadb" | "faiss"
-
-
-# =============================================================================
-# IMPLEMENTATION
-# =============================================================================
 
 def load_documents() -> list[dict]:
-    """
-    Đọc toàn bộ markdown files từ data/standardized/.
+    """Đọc toàn bộ markdown files từ data/standardized/."""
+    documents = []
+    if not STANDARDIZED_DIR.exists():
+        return documents
 
-    Returns:
-        List of {'content': str, 'metadata': {'source': str, 'type': str}}
-    """
-    # TODO: Iterate qua STANDARDIZED_DIR, đọc .md files
-    # documents = []
-    # for md_file in STANDARDIZED_DIR.rglob("*.md"):
-    #     content = md_file.read_text(encoding="utf-8")
-    #     doc_type = "legal" if "legal" in str(md_file) else "news"
-    #     documents.append({
-    #         "content": content,
-    #         "metadata": {"source": md_file.name, "type": doc_type}
-    #     })
-    # return documents
-    raise NotImplementedError("Implement load_documents")
+    for md_file in STANDARDIZED_DIR.rglob("*.md"):
+        content = md_file.read_text(encoding="utf-8")
+        doc_type = "legal" if "legal" in str(md_file) else "news"
+        documents.append({
+            "content": content,
+            "metadata": {"source": md_file.name, "type": doc_type}
+        })
+    return documents
 
 
 def chunk_documents(documents: list[dict]) -> list[dict]:
-    """
-    Chunk documents theo strategy đã chọn.
-
-    Returns:
-        List of {'content': str, 'metadata': dict} — mỗi item là 1 chunk
-    """
-    # TODO: Implement chunking
-    #
-    # Ví dụ với RecursiveCharacterTextSplitter:
-    # from langchain_text_splitters import RecursiveCharacterTextSplitter
-    #
-    # splitter = RecursiveCharacterTextSplitter(
-    #     chunk_size=CHUNK_SIZE,
-    #     chunk_overlap=CHUNK_OVERLAP,
-    #     separators=["\n\n", "\n", ". ", " ", ""]
-    # )
-    # chunks = []
-    # for doc in documents:
-    #     splits = splitter.split_text(doc["content"])
-    #     for i, chunk_text in enumerate(splits):
-    #         chunks.append({
-    #             "content": chunk_text,
-    #             "metadata": {**doc["metadata"], "chunk_index": i}
-    #         })
-    # return chunks
-    raise NotImplementedError("Implement chunk_documents")
+    """Chia nhỏ văn bản bằng cơ chế dịch chuyển cửa sổ (sliding window)."""
+    chunks = []
+    for doc in documents:
+        content = doc["content"]
+        start = 0
+        i = 0
+        while start < len(content):
+            end = start + CHUNK_SIZE
+            chunk_text = content[start:end]
+            chunks.append({
+                "content": chunk_text,
+                "metadata": {**doc["metadata"], "chunk_index": i}
+            })
+            start += CHUNK_SIZE - CHUNK_OVERLAP
+            i += 1
+    return chunks
 
 
 def embed_chunks(chunks: list[dict]) -> list[dict]:
-    """
-    Embed toàn bộ chunks bằng model đã chọn.
-
-    Returns:
-        Mỗi chunk dict được thêm key 'embedding': list[float]
-    """
-    # TODO: Implement embedding
-    #
-    # Ví dụ với sentence-transformers:
-    # from sentence_transformers import SentenceTransformer
-    #
-    # model = SentenceTransformer(EMBEDDING_MODEL)
-    # texts = [c["content"] for c in chunks]
-    # embeddings = model.encode(texts, show_progress_bar=True)
-    # for chunk, emb in zip(chunks, embeddings):
-    #     chunk["embedding"] = emb.tolist()
-    # return chunks
-    raise NotImplementedError("Implement embed_chunks")
+    """Nhúng vector sử dụng API OpenAI text-embedding-3-small."""
+    import time
+    texts = [c["content"] for c in chunks]
+    print(f"Đang tiến hành nhúng {len(texts)} chunks bằng OpenAI API...")
+    
+    # OpenAI hỗ trợ batch size lớn hơn (tối đa 2048)
+    batch_size = 100
+    embeddings = []
+    
+    for idx in range(0, len(texts), batch_size):
+        batch_texts = texts[idx:idx+batch_size]
+        
+        # Thử gọi API kèm cơ chế tự động thử lại khi bị giới hạn tần suất (Rate Limit / 429)
+        for attempt in range(5):
+            try:
+                response = client.embeddings.create(
+                    model=EMBEDDING_MODEL,
+                    input=batch_texts
+                )
+                batch_embeddings = [data.embedding for data in response.data]
+                embeddings.extend(batch_embeddings)
+                break
+            except Exception as e:
+                if "429" in str(e) or "RateLimitError" in e.__class__.__name__:
+                    print(f"  [Rate Limit] Đang chờ 10 giây trước khi thử lại (Lần thử {attempt+1}/5)...")
+                    time.sleep(10.0)
+                else:
+                    raise e
+        
+        print(f"  Đã nhúng: {min(idx+batch_size, len(texts))}/{len(texts)} chunks...")
+        time.sleep(0.5)  # Tránh spam quá nhanh
+        
+    for chunk, emb in zip(chunks, embeddings):
+        chunk["embedding"] = emb
+        
+    return chunks
 
 
 def index_to_vectorstore(chunks: list[dict]):
-    """
-    Lưu chunks vào vector store đã chọn.
-    """
-    # TODO: Implement indexing
-    #
-    # Ví dụ với Weaviate:
-    # import weaviate
-    # from weaviate.classes.config import Configure, Property, DataType
-    #
-    # client = weaviate.connect_to_local()  # hoặc connect_to_weaviate_cloud()
-    #
-    # # Tạo collection
-    # collection = client.collections.create(
-    #     name="DrugLawDocs",
-    #     vectorizer_config=Configure.Vectorizer.none(),
-    #     properties=[
-    #         Property(name="content", data_type=DataType.TEXT),
-    #         Property(name="source", data_type=DataType.TEXT),
-    #         Property(name="doc_type", data_type=DataType.TEXT),
-    #     ]
-    # )
-    #
-    # # Insert chunks
-    # with collection.batch.dynamic() as batch:
-    #     for chunk in chunks:
-    #         batch.add_object(
-    #             properties={"content": chunk["content"], ...},
-    #             vector=chunk["embedding"]
-    #         )
-    raise NotImplementedError("Implement index_to_vectorstore")
+    """Lưu trữ kết quả nhúng vào file JSON cục bộ."""
+    vector_store_path = Path(__file__).parent.parent / "data" / "vector_store.json"
+    vector_store_path.parent.mkdir(parents=True, exist_ok=True)
+    vector_store_path.write_text(json.dumps(chunks, ensure_ascii=False, indent=2))
+    print(f"✓ Đã lưu Vector Store cục bộ tại: {vector_store_path}")
 
 
 def run_pipeline():
-    """Chạy toàn bộ pipeline: load → chunk → embed → index."""
     print("=" * 50)
-    print("Task 4: Chunking & Indexing")
+    print("Task 4: Chunking & Indexing với OpenAI API")
     print(f"  Chunking: {CHUNKING_METHOD} (size={CHUNK_SIZE}, overlap={CHUNK_OVERLAP})")
     print(f"  Embedding: {EMBEDDING_MODEL} (dim={EMBEDDING_DIM})")
     print(f"  Vector Store: {VECTOR_STORE}")

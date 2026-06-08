@@ -26,10 +26,12 @@ def setup_directory():
 
 # TODO: Điền danh sách URL bài báo cần crawl
 ARTICLE_URLS = [
-    # Ví dụ:
-    # "https://vnexpress.net/...",
-    # "https://tuoitre.vn/...",
-    # "https://thanhnien.vn/...",
+    "https://vnexpress.net/ca-si-miu-le-bi-bat-qua-tang-dung-ma-tuy-o-bai-bien-5072657.html",
+    "https://vnexpress.net/ca-si-miu-le-bi-bat-voi-cao-buoc-to-chuc-su-dung-ma-tuy-5074769.html",
+    "https://vnexpress.net/nguoi-mau-andrea-aybar-va-ca-si-chi-dan-bi-bat-4814295.html",
+    "https://vnexpress.net/anh-em-ca-si-chi-dan-ru-nhieu-nguoi-choi-ma-tuy-nhu-the-nao-4929804.html",
+    "https://vnexpress.net/dem-su-dung-ma-tuy-cuong-loan-cua-ca-si-chau-viet-cuong-3863999.html",
+    "https://vnexpress.net/rapper-binh-gold-tiep-tuc-duong-tinh-voi-ma-tuy-lai-cuop-taxi-4919259.html"
 ]
 
 
@@ -56,7 +58,20 @@ async def crawl_article(url: str) -> dict:
     #         "date_crawled": datetime.now().isoformat(),
     #         "content_markdown": result.markdown,
     #     }
-    raise NotImplementedError("Implement crawl_article")
+    
+    async with AsyncWebCrawler() as crawler:
+        result = await crawler.arun(url=url)
+        
+        # Lấy tiêu đề từ metadata hoặc tự tách
+        title = "Unknown"
+        if result.metadata and isinstance(result.metadata, dict):
+            title = result.metadata.get("title") or result.metadata.get("og:title") or "Unknown"
+        return {
+            "url": url,
+            "title": title,
+            "date_crawled": datetime.now().isoformat(),
+            "content_markdown": result.markdown or "",
+        }
 
 
 async def crawl_all():
